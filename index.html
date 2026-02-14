@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distance & Love</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: Georgia, serif;
+background: url("background.jpg") center/cover no-repeat;
+background-attachment: fixed;
+background-color: #0f0f23;
+min-height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+overflow-x: hidden;
+color: #ffffff;
+}
+
+.container {
+width: 90%;
+max-width: 650px;
+padding: 50px;
+background: rgba(255, 255, 255, 0.08);
+backdrop-filter: blur(15px);
+border-radius: 25px;
+border: 1px solid rgba(255, 255, 255, 0.18);
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+opacity: 0;
+transition: opacity 1s ease-in-out;
+min-height: 400px;
+}
+
+.container.visible {
+opacity: 1;
+}
+
+.story-text {
+font-size: 1.4em;
+line-height: 1.9;
+text-align: center;
+margin-bottom: 35px;
+text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.choice-container {
+display: flex;
+flex-direction: column;
+gap: 15px;
+margin-top: 30px;
+}
+
+.choice-btn {
+padding: 18px 30px;
+font-size: 1.15em;
+font-family: Georgia, serif;
+color: #ffffff;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+border: none;
+border-radius: 50px;
+cursor: pointer;
+box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+transition: all 0.3s ease;
+text-align: center;
+}
+
+.choice-btn:hover {
+transform: translateY(-3px);
+box-shadow: 0 6px 25px rgba(102, 126, 234, 0.7);
+}
+
+.choice-btn.secondary {
+background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+box-shadow: 0 4px 15px rgba(240, 147, 251, 0.5);
+}
+
+.choice-btn.secondary:hover {
+box-shadow: 0 6px 25px rgba(240, 147, 251, 0.7);
+}
+
+.chat-message {
+background: rgba(255, 255, 255, 0.15);
+padding: 15px 20px;
+border-radius: 18px;
+margin: 10px 0;
+text-align: left;
+font-size: 1.1em;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.chat-message.received {
+background: rgba(102, 126, 234, 0.3);
+margin-right: 50px;
+}
+
+.chat-message.sent {
+background: rgba(118, 75, 162, 0.3);
+margin-left: 50px;
+text-align: right;
+}
+
+.message-time {
+font-size: 0.75em;
+opacity: 0.7;
+margin-top: 5px;
+}
+
+.photo-frame {
+width: 100%;
+max-width: 400px;
+height: 300px;
+background: rgba(255, 255, 255, 0.1);
+border-radius: 15px;
+margin: 20px auto;
+display: flex;
+justify-content: center;
+align-items: center;
+border: 2px solid rgba(255, 255, 255, 0.3);
+font-size: 4em;
+box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.voice-note {
+background: rgba(102, 126, 234, 0.25);
+padding: 20px;
+border-radius: 20px;
+margin: 20px 0;
+text-align: center;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.voice-note:hover {
+background: rgba(102, 126, 234, 0.35);
+transform: scale(1.02);
+}
+
+.play-icon {
+font-size: 2em;
+margin-bottom: 10px;
+}
+
+.envelope-container {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.95);
+justify-content: center;
+align-items: center;
+z-index: 2000;
+overflow-y: auto;
+padding: 20px;
+}
+
+.envelope-container.active {
+display: flex;
+}
+
+.envelope {
+position: relative;
+width: 350px;
+height: 220px;
+cursor: pointer;
+transition: transform 0.3s ease;
+flex-shrink: 0;
+}
+
+.envelope:hover {
+transform: scale(1.05);
+}
+
+.envelope-body {
+width: 100%;
+height: 100%;
+background: linear-gradient(135deg, #f5f5dc 0%, #e8e8d0 100%);
+border-radius: 10px;
+box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+position: relative;
+}
+
+.envelope-flap {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 50%;
+background: linear-gradient(135deg, #d4d4bc 0%, #c8c8b0 100%);
+border-radius: 10px 10px 0 0;
+transform-origin: top;
+transition: transform 1s ease;
+z-index: 10;
+clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.envelope.opened .envelope-flap {
+transform: rotateX(-180deg);
+}
+
+.letter {
+position: absolute;
+width: 95%;
+max-width: 600px;
+background: #fffef7;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+border-radius: 8px;
+box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+opacity: 0;
+transition: all 1.8s ease;
+padding: 50px 40px;
+overflow-y: auto;
+max-height: 80vh;
+border: 1px solid #e8e8d0;
+}
+
+.envelope.opened .letter {
+opacity: 1;
+top: 50%;
+transform: translate(-50%, -50%) scale(1);
+}
+
+.letter-paper {
+background: #fffef7;
+position: relative;
+}
+
+.letter-header {
+text-align: center;
+margin-bottom: 30px;
+padding-bottom: 20px;
+border-bottom: 2px solid #d4af37;
+}
+
+.letter-title {
+font-size: 1.8em;
+color: #8b4789;
+font-family: 'Brush Script MT', cursive, Georgia, serif;
+margin-bottom: 10px;
+}
+
+.letter-decoration {
+font-size: 2em;
+color: #d4af37;
+}
+
+.letter-content {
+font-size: 1.15em;
+line-height: 2;
+color: #2c2c2c;
+text-align: left;
+font-family: 'Garamond', Georgia, serif;
+white-space: pre-wrap;
+}
+
+.letter-content p {
+margin-bottom: 20px;
+text-indent: 30px;
+}
+
+.letter-signature {
+margin-top: 40px;
+text-align: right;
+font-size: 1.3em;
+color: #8b4789;
+font-family: 'Brush Script MT', cursive, Georgia, serif;
+font-style: italic;
+}
+
+.letter-hearts {
+text-align: center;
+margin-top: 30px;
+font-size: 1.5em;
+color: #d4af37;
+}
+
+.memory-badge {
+display: inline-block;
+background: rgba(255, 215, 0, 0.3);
+padding: 8px 15px;
+border-radius: 20px;
+font-size: 0.9em;
+margin-bottom: 15px;
+border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.scene-counter {
+text-align: center;
+color: rgba(255, 255, 255, 0.5);
+font-size: 0.85em;
+margin-bottom: 25px;
+}
+
+.petal {
+position: fixed;
+font-size: 2.5em;
+animation: fall-petal linear forwards;
+z-index: 1999;
+pointer-events: none;
+}
+
+@keyframes fall-petal {
+0% {
+top: -100px;
+opacity: 1;
+transform: rotate(0deg);
+}
+100% {
+top: 100vh;
+opacity: 0.3;
+transform: rotate(360deg);
+}
+}
+
+.ending-dark {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: #000000;
+z-index: 1998;
+}
+
+.ending-dark.active {
+display: block;
+}
+
+.typewriter {
+overflow: hidden;
+border-right: 2px solid #8b4789;
+white-space: nowrap;
+animation: typing 4s steps(40) forwards, blink 0.75s step-end infinite;
+display: inline-block;
+}
+
+@keyframes typing {
+from { width: 0; }
+to { width: 100%; }
+}
+
+@keyframes blink {
+from, to { border-color: transparent; }
+50% { border-color: #8b4789; }
+}
+</style>
+</head>
+<body>
+
+<div class="ending-dark" id="endingDark"></div>
+
+<div class="container" id="gameContainer">
+<div class="scene-counter" id="sceneCounter"></div>
+<div id="sceneContent"></div>
+</div>
+
+<div class="envelope-container" id="envelopeContainer">
+<div class="envelope" id="envelope" onclick="openEnvelope()">
+<div class="envelope-body">
+<div class="envelope-flap"></div>
+<div class="letter" id="letterElement">
+<div class="letter-paper">
+<div class="letter-header">
+<div class="letter-decoration">❤️ ✨ ❤️</div>
+<div class="letter-title">A Letter For You</div>
+<div class="letter-decoration">❤️ ✨ ❤️</div>
+</div>
+<div class="letter-content" id="letterText"></div>
+<div class="letter-signature" id="letterSignature"></div>
+<div class="letter-hearts">♡ ♡ ♡</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+var currentScene = 0;
+var totalScenes = 35;
+var choices = {};
+
+function updateCounter() {
+var counter = document.getElementById("sceneCounter");
+if (currentScene < totalScenes) {
+counter.innerHTML = "Scene " + (currentScene + 1);
+} else {
+counter.innerHTML = "";
+}
+}
+
+function fadeOut(callback) {
+var container = document.getElementById("gameContainer");
+container.classList.remove("visible");
+setTimeout(callback, 1000);
+}
+
+function fadeIn() {
+var container = document.getElementById("gameContainer");
+updateCounter();
+setTimeout(function() {
+container.classList.add("visible");
+}, 50);
+}
+
+function goToScene(sceneNumber) {
+fadeOut(function() {
+currentScene = sceneNumber;
+renderScene(currentScene);
+fadeIn();
+});
+}
+
+function renderScene(sceneNum) {
+var content = document.getElementById("sceneContent");
+content.innerHTML = "";
+
+if (sceneNum === 0) {
+content.innerHTML = '<div class="story-text">You wake up and check your phone. The morning light filters through your curtains. 6:47 AM.</div><div class="story-text">One notification.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(1)">Open the message</button></div>';
+}
+else if (sceneNum === 1) {
+content.innerHTML = '<div class="chat-message received">Good morning ❤️<div class="message-time">3:42 AM</div></div><div class="chat-message received">I know you\'re still sleeping<div class="message-time">3:42 AM</div></div><div class="chat-message received">But I wanted you to wake up to this<div class="message-time">3:43 AM</div></div><div class="story-text" style="margin-top: 30px;">Your heart does that thing it always does.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(2)">Smile and keep reading</button></div>';
+}
+else if (sceneNum === 2) {
+content.innerHTML = '<div class="story-text">You sit up in bed, phone warm in your hands.</div><div class="story-text">Three thousand miles away, he\'s probably having lunch right now.</div><div class="story-text">You can picture him typing this at his desk, grinning at his screen.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(3)">Reply now</button><button class="choice-btn secondary" onclick="goToScene(4)">Remember how it started</button></div>';
+}
+else if (sceneNum === 3) {
+content.innerHTML = '<div class="story-text">You type:</div><div class="chat-message sent">You\'re ridiculous<div class="message-time">6:49 AM</div></div><div class="chat-message sent">I love you<div class="message-time">6:49 AM</div></div><div class="story-text" style="margin-top: 25px;">Typing indicator appears immediately.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(5)">Wait for his reply</button></div>';
+}
+else if (sceneNum === 4) {
+content.innerHTML = '<div class="memory-badge">✨ Memory unlocked</div><div class="story-text">It started so randomly.</div><div class="story-text">A comment on a friend\'s post. A shared joke. A DM that said "Wait, that was actually funny."</div><div class="story-text">You remember staying up until 4 AM talking about nothing and everything.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(6)">Keep remembering</button><button class="choice-btn secondary" onclick="goToScene(3)">Come back to now</button></div>';
+}
+else if (sceneNum === 5) {
+content.innerHTML = '<div class="chat-message received">Did I wake you up?<div class="message-time">6:50 AM</div></div><div class="chat-message received">You never sleep past 7 anyway<div class="message-time">6:50 AM</div></div><div class="chat-message received">Creature of habit ❤️<div class="message-time">6:51 AM</div></div><div class="story-text" style="margin-top: 25px;">He knows you too well.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(7)">Continue chatting</button></div>';
+}
+else if (sceneNum === 6) {
+content.innerHTML = '<div class="memory-badge">✨ Memory: First Call</div><div class="story-text">"Should we... voice call?" he had typed.</div><div class="story-text">You remember your heart racing. You\'d been texting for two weeks.</div><div class="story-text">His voice was different than you imagined. Warmer. Real.</div><div class="story-text">That call lasted six hours.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(8)">Continue memory</button></div>';
+}
+else if (sceneNum === 7) {
+content.innerHTML = '<div class="chat-message sent">What are you having for lunch?<div class="message-time">6:52 AM</div></div><div class="chat-message received">Probably that sandwich place<div class="message-time">6:53 AM</div></div><div class="chat-message received">The one I keep telling you about<div class="message-time">6:53 AM</div></div><div class="chat-message sent">You mean the one you\'ll take me to in summer? 😊<div class="message-time">6:54 AM</div></div><div class="choice-container"><button class="choice-btn" onclick="goToScene(9)">Continue</button></div>';
+}
+else if (sceneNum === 8) {
+content.innerHTML = '<div class="story-text">After that first call, everything changed.</div><div class="story-text">Suddenly you had routines. Good morning texts. Lunch break calls. Goodnight voice notes.</div><div class="story-text">Your friends noticed you smiling at your phone.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(10)">Return to present</button></div>';
+}
+else if (sceneNum === 9) {
+content.innerHTML = '<div class="chat-message received">Summer...<div class="message-time">6:55 AM</div></div><div class="chat-message received">I keep thinking about it<div class="message-time">6:55 AM</div></div><div class="chat-message received">Every day<div class="message-time">6:55 AM</div></div><div class="story-text" style="margin-top: 25px;">Your chest tightens in that bittersweet way.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(11)">Tell him you think about it too</button><button class="choice-btn secondary" onclick="goToScene(12)">Ask about his day instead</button></div>';
+}
+else if (sceneNum === 10) {
+content.innerHTML = '<div class="story-text">You blink. The memory fades.</div><div class="story-text">Your phone is still in your hand. His messages are still there.</div><div class="story-text">Three thousand miles hasn\'t changed anything that matters.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(13)">Keep reading messages</button></div>';
+}
+else if (sceneNum === 11) {
+content.innerHTML = '<div class="chat-message sent">Me too<div class="message-time">6:57 AM</div></div><div class="chat-message sent">All the time<div class="message-time">6:57 AM</div></div><div class="chat-message received">129 days<div class="message-time">6:58 AM</div></div><div class="chat-message received">But who\'s counting 😅<div class="message-time">6:58 AM</div></div><div class="choice-container"><button class="choice-btn" onclick="goToScene(14)">Continue</button></div>';
+}
+else if (sceneNum === 12) {
+content.innerHTML = '<div class="chat-message sent">How\'s work going?<div class="message-time">6:57 AM</div></div><div class="chat-message received">It\'s fine<div class="message-time">6:58 AM</div></div><div class="chat-message received">Better when I talk to you<div class="message-time">6:58 AM</div></div><div class="story-text" style="margin-top: 25px;">Even when you redirect, he finds his way back.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(14)">Continue</button></div>';
+}
+else if (sceneNum === 13) {
+content.innerHTML = '<div class="chat-message received">I sent you something<div class="message-time">6:59 AM</div></div><div class="chat-message received">Check your email when you get a chance<div class="message-time">6:59 AM</div></div><div class="story-text" style="margin-top: 25px;">Your curiosity peaks.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(15)">Check email now</button><button class="choice-btn secondary" onclick="goToScene(16)">Ask what it is</button></div>';
+}
+else if (sceneNum === 14) {
+content.innerHTML = '<div class="story-text">You think about last winter.</div><div class="story-text">The week you finally met in person.</div><div class="story-text">Standing at the airport, heart in your throat.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(17)">Relive that memory</button><button class="choice-btn secondary" onclick="goToScene(18)">Stay in the present</button></div>';
+}
+else if (sceneNum === 15) {
+content.innerHTML = '<div class="story-text">You open your email app.</div><div class="story-text">Subject: "For when you miss me"</div><div class="story-text">It\'s a voice note. 2 minutes and 47 seconds.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(19)">Play it</button></div>';
+}
+else if (sceneNum === 16) {
+content.innerHTML = '<div class="chat-message sent">What is it??<div class="message-time">7:01 AM</div></div><div class="chat-message received">Just check it<div class="message-time">7:02 AM</div></div><div class="chat-message received">When you\'re alone<div class="message-time">7:02 AM</div></div><div class="choice-container"><button class="choice-btn" onclick="goToScene(15)">Check email</button></div>';
+}
+else if (sceneNum === 17) {
+content.innerHTML = '<div class="memory-badge">✨ Memory: Winter Meeting</div><div class="story-text">You saw him before he saw you.</div><div class="story-text">Walking through arrivals, scanning the crowd. Then his eyes found yours.</div><div class="story-text">The world stopped.</div><div class="story-text">He smiled that smile you\'d only seen through a screen.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(20)">Remember the hug</button></div>';
+}
+else if (sceneNum === 18) {
+content.innerHTML = '<div class="story-text">You shake off the memories.</div><div class="story-text">Right now, in this moment, he\'s thinking of you.</div><div class="story-text">That\'s enough.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(21)">Continue the morning</button></div>';
+}
+else if (sceneNum === 19) {
+content.innerHTML = '<div class="voice-note" onclick="goToScene(22)"><div class="play-icon">▶️</div><div>Voice Note - 2:47</div><div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">Tap to play</div></div>';
+}
+else if (sceneNum === 20) {
+content.innerHTML = '<div class="story-text">He dropped his bag.</div><div class="story-text">You ran.</div><div class="story-text">The hug lasted forever and not long enough. He was warm and real and there.</div><div class="story-text">He whispered, "Hi."</div><div class="story-text">You cried.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(23)">Remember that week</button></div>';
+}
+else if (sceneNum === 21) {
+content.innerHTML = '<div class="story-text">You get out of bed, phone still in hand.</div><div class="story-text">Coffee. Shower. The morning routine.</div><div class="story-text">But today feels different. Lighter.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(24)">Think about summer plans</button></div>';
+}
+else if (sceneNum === 22) {
+content.innerHTML = '<div class="story-text">"Hey, bubu..."</div><div class="story-text">His voice fills your room.</div><div class="story-text">"I was just sitting here thinking about you. I know we talk every day, but... I don\'t say it enough. You make the distance worth it. Every single day."</div><div class="story-text">"I can\'t wait to see you again. To hold your hand. To just... be in the same room."</div><div class="story-text">"Anyway. I love you. So much."</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(25)">Listen again</button><button class="choice-btn secondary" onclick="goToScene(26)">Reply to him</button></div>';
+}
+else if (sceneNum === 23) {
+content.innerHTML = '<div class="story-text">That week was a dream.</div><div class="story-text">Coffee shops. Late night walks. His hand in yours.</div><div class="story-text">Learning how he takes his coffee. The way he laughs in person.</div><div class="story-text">Saying goodbye at the airport was the hardest thing you\'d ever done.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(27)">Remember the goodbye</button><button class="choice-btn secondary" onclick="goToScene(28)">Focus on the good parts</button></div>';
+}
+else if (sceneNum === 24) {
+content.innerHTML = '<div class="story-text">Summer. Four months away.</div><div class="story-text">This time it\'s not just a visit.</div><div class="story-text">You\'ve been planning. Talking about apartments. Jobs. A real future.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(29)">Imagine the reunion</button></div>';
+}
+else if (sceneNum === 25) {
+content.innerHTML = '<div class="voice-note" onclick="goToScene(26)"><div class="play-icon">▶️</div><div>Voice Note - 2:47</div><div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">Playing again...</div></div>';
+}
+else if (sceneNum === 26) {
+content.innerHTML = '<div class="story-text">You record your own voice note.</div><div class="story-text">"I just listened to yours. You\'re going to make me cry before work."</div><div class="story-text">"I love you too. So much. We\'re going to make it."</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(30)">Send it</button></div>';
+}
+else if (sceneNum === 27) {
+content.innerHTML = '<div class="story-text">Standing at security. Both of you pretending to be okay.</div><div class="story-text">"Four months," he said.</div><div class="story-text">"Four months," you repeated.</div><div class="story-text">The hug lasted until the final boarding call.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(28)">Continue</button></div>';
+}
+else if (sceneNum === 28) {
+content.innerHTML = '<div class="story-text">But you made it through.</div><div class="story-text">Calls. Messages. Late night video chats.</div><div class="story-text">The distance never broke you. It proved you.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(29)">Think about summer</button></div>';
+}
+else if (sceneNum === 29) {
+content.innerHTML = '<div class="story-text">You close your eyes and imagine it.</div><div class="story-text">Walking through arrivals again.</div><div class="story-text">But this time, there\'s no return ticket.</div><div class="story-text">This time, you\'re staying.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(31)">Imagine the moment</button></div>';
+}
+else if (sceneNum === 30) {
+content.innerHTML = '<div class="chat-message received">Just listened to yours<div class="message-time">7:15 AM</div></div><div class="chat-message received">We ARE going to make it<div class="message-time">7:15 AM</div></div><div class="chat-message received">I promise<div class="message-time">7:16 AM</div></div><div class="choice-container"><button class="choice-btn" onclick="goToScene(31)">Continue</button></div>';
+}
+else if (sceneNum === 31) {
+content.innerHTML = '<div class="story-text">You imagine walking through those airport doors.</div><div class="story-text">Scanning the crowd.</div><div class="story-text">And then...</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(32)">You see him</button></div>';
+}
+else if (sceneNum === 32) {
+content.innerHTML = '<div class="story-text">He\'s there.</div><div class="story-text">Same smile. Same eyes.</div><div class="story-text">But this time there\'s no countdown.</div><div class="story-text">No goodbye waiting at the end.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(33)">Run to him</button></div>';
+}
+else if (sceneNum === 33) {
+content.innerHTML = '<div class="story-text">You drop everything.</div><div class="story-text">You run.</div><div class="story-text">He catches you.</div><div class="story-text">And finally, finally...</div><div class="story-text">You\'re home.</div><div class="choice-container"><button class="choice-btn" onclick="goToScene(34)">...</button></div>';
+}
+else if (sceneNum === 34) {
+content.innerHTML = '<div class="story-text">"I\'m never letting you go," he whispers.</div><div class="story-text">"Good," you whisper back.</div><div class="story-text">The distance is over.</div><div class="story-text">Your forever is beginning.</div><div class="choice-container"><button class="choice-btn" onclick="startEnding()">♡</button></div>';
+}
+}
+
+function startEnding() {
+fadeOut(function() {
+var dark = document.getElementById("endingDark");
+dark.classList.add("active");
+createPetals();
+setTimeout(showEnvelope, 3000);
+});
+}
+
+function createPetals() {
+var petals = ["🌸", "🌺", "🌷", "💐", "🏵️", "🌼"];
+for (var i = 0; i < 40; i++) {
+setTimeout(function() {
+var petal = document.createElement("div");
+petal.className = "petal";
+petal.innerHTML = petals[Math.floor(Math.random() * petals.length)];
+petal.style.left = Math.random() * 100 + "vw";
+petal.style.animationDuration = (Math.random() * 4 + 4) + "s";
+petal.style.animationDelay = Math.random() * 2 + "s";
+document.body.appendChild(petal);
+}, i * 100);
+}
+}
+
+function showEnvelope() {
+var envContainer = document.getElementById("envelopeContainer");
+envContainer.classList.add("active");
+}
+
+function openEnvelope() {
+var env = document.getElementById("envelope");
+if (!env.classList.contains("opened")) {
+env.classList.add("opened");
+setTimeout(typewriterEffect, 2500);
+}
+}
+
+function typewriterEffect() {
+var letterText = document.getElementById("letterText");
+var signature = document.getElementById("letterSignature");
+
+var fullText = "Dear bubu,\n\nI know I've been a bad bf, a bad friend and a bad person overall at times... I know I've hurt you... I've made you feel unwanted and what not... Trust me, I never did any of that intentionally.\n\nI always thought of you as my dream girl. You are my dream girl, my sweetheart. Any moment without you feels draining. I know there are other people who can treat you better, but I promise I'll always be there improving myself to give you whatever you want in life.\n\nYou're the most amazing person I've ever met, and you are the closest to me. I truly love you more than myself.\n\nLove you forever.";
+var signatureText = "- mera shona bubu";
+var index = 0;
+
+letterText.innerHTML = "";
+signature.innerHTML = "";
+
+var interval = setInterval(function() {
+if (index < fullText.length) {
+var char = fullText.charAt(index);
+if (char === '\n') {
+letterText.innerHTML += '<br>';
+} else {
+letterText.innerHTML += char;
+}
+index++;
+} else {
+clearInterval(interval);
+setTimeout(function() {
+var sigIndex = 0;
+var sigInterval = setInterval(function() {
+if (sigIndex < signatureText.length) {
+signature.innerHTML += signatureText.charAt(sigIndex);
+sigIndex++;
+} else {
+clearInterval(sigInterval);
+}
+}, 80);
+}, 500);
+}
+}, 50);
+}
+
+window.onload = function() {
+renderScene(0);
+fadeIn();
+};
+</script>
+
+</body>
+</html>
